@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PCS GL Pivot · P1–P5 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f1117;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px}
+.header{background:#1a1d27;border-bottom:1px solid #2d3148;padding:14px 24px;display:flex;align-items:center;gap:16px}
+.header h1{font-size:17px;font-weight:700;color:#fff}
+.header .sub{color:#94a3b8;font-size:12px;margin-top:2px}
+.header .ts{margin-left:auto;color:#374151;font-size:11px;text-align:right}
+.container{padding:16px 24px}
+.loading{text-align:center;padding:80px;color:#374151;font-size:14px}
+.err{text-align:center;padding:80px;color:#ef4444;font-size:13px}
+
+.filter-bar{background:#1a1d27;border:1px solid #2d3148;border-radius:10px;padding:14px 18px;margin-bottom:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.fld{display:flex;flex-direction:column;gap:4px}
+.fld label{color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+select,input[type=text]{background:#0f1117;border:1px solid #2d3148;color:#e2e8f0;border-radius:6px;padding:6px 10px;font-size:13px;outline:none;height:34px}
+select:focus,input[type=text]:focus{border-color:#6366f1}
+select.gl-sel{min-width:300px}
+.btn{background:#1e2235;color:#94a3b8;border:1px solid #2d3148;border-radius:6px;padding:7px 14px;font-size:12px;cursor:pointer;height:34px;white-space:nowrap}
+.btn:hover{background:#2d3148;color:#e2e8f0}
+.btn.on{background:#6366f1;color:#fff;border-color:#6366f1}
+.btn.action{background:#16a34a;color:#fff;border-color:#16a34a}
+.btn.action:hover{background:#15803d}
+.btn.action:disabled{opacity:.4;cursor:default;background:#1e2235;color:#64748b;border-color:#2d3148}
+.sep{width:1px;background:#2d3148;height:28px;align-self:center}
+.hint{color:#64748b;font-size:11px;align-self:center}
+
+.action-bar{background:#1a2a1e;border:1px solid #16a34a55;border-radius:10px;padding:12px 18px;margin-bottom:10px;display:none;align-items:center;gap:14px;flex-wrap:wrap}
+.action-bar.visible{display:flex}
+.action-bar .ab-label{color:#22c55e;font-weight:600}
+.action-bar .ab-sub{color:#64748b;font-size:12px;flex:1}
+
+.summary-strip{display:flex;gap:20px;margin-bottom:10px;padding:12px 16px;background:#1a1d27;border:1px solid #2d3148;border-radius:8px;flex-wrap:wrap}
+.ss-item .lbl{color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+.ss-item .val{font-size:15px;font-weight:700}
+.val.neg{color:#ef4444}.val.pos{color:#22c55e}.val.warn{color:#f59e0b}
+
+.legend{display:flex;gap:16px;align-items:center;margin-bottom:8px;font-size:11px;color:#64748b;flex-wrap:wrap}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.dot-miss{background:#f59e0b}.dot-cred{background:#ef4444}
+
+.tbl-wrap{background:#1a1d27;border:1px solid #2d3148;border-radius:10px;overflow:auto;max-height:70vh}
+table{border-collapse:collapse}
+thead th{background:#12141f;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:9px 12px;text-align:right;border-bottom:2px solid #2d3148;white-space:nowrap;position:sticky;top:0;z-index:2;cursor:pointer}
+thead th:hover{color:#e2e8f0}
+thead th.left{text-align:left}
+thead th.chk-col{text-align:center;padding:9px 8px;width:36px;cursor:default;position:sticky;top:0;left:0;z-index:4;background:#12141f}
+thead th.cc-col{position:sticky;top:0;left:36px;z-index:3;background:#12141f;min-width:76px;text-align:left}
+thead th.name-col{position:sticky;top:0;left:112px;z-index:3;background:#12141f;min-width:148px;text-align:left;border-right:1px solid #2d3148}
+thead th.var-col{border-left:1px solid #2d3148;color:#a78bfa}
+thead th.total-col{border-left:1px solid #2d3148}
+thead th.sort-asc::after{content:" ▲";color:#6366f1}
+thead th.sort-desc::after{content:" ▼";color:#6366f1}
+
+tbody tr{border-bottom:1px solid #161825}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover td{background:#1e2235}
+tbody tr.total-row td{background:#12141f!important;font-weight:700;border-top:2px solid #2d3148}
+tbody tr.miss td.p5c{background:#1f1a08}
+tbody tr.cred td.p5c{background:#1f0f0f}
+tbody tr.checked{background:#13192e}
+
+td{padding:7px 12px;text-align:right;white-space:nowrap}
+td.chk-col{text-align:center;padding:7px 8px;vertical-align:middle;position:sticky;left:0;background:#1a1d27;z-index:1}
+td.cc-col{text-align:left;position:sticky;left:36px;background:#1a1d27;z-index:1;color:#94a3b8;font-size:12px}
+td.name-col{text-align:left;position:sticky;left:112px;background:#1a1d27;z-index:1;border-right:1px solid #2d3148;max-width:148px;overflow:hidden;text-overflow:ellipsis}
+td.st-col{text-align:left;color:#64748b;font-size:11px}
+td.var-col{border-left:1px solid #2d3148;font-weight:600}
+td.total-col{border-left:1px solid #2d3148;font-weight:600}
+td.zero{color:#2d3753}
+td.credit{color:#ef4444}
+td.normal{color:#e2e8f0}
+td.var-pos{color:#22c55e}
+td.var-neg{color:#ef4444}
+td.var-zero{color:#2d3753}
+tbody tr:hover td.chk-col,tbody tr:hover td.cc-col,tbody tr:hover td.name-col{background:#1e2235}
+tbody tr.checked td.chk-col,tbody tr.checked td.cc-col,tbody tr.checked td.name-col{background:#13192e}
+tbody tr.checked:hover td,tbody tr.checked:hover td.chk-col,tbody tr.checked:hover td.cc-col,tbody tr.checked:hover td.name-col{background:#1a2040}
+tbody tr.total-row td.chk-col,tbody tr.total-row td.cc-col,tbody tr.total-row td.name-col{background:#12141f}
+input[type=checkbox]{width:14px;height:14px;cursor:pointer;accent-color:#6366f1}
+
+.modal-bg{display:none;position:fixed;inset:0;background:#00000099;z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#1a1d27;border:1px solid #2d3148;border-radius:12px;padding:24px;width:720px;max-width:95vw;max-height:88vh;display:flex;flex-direction:column;gap:14px}
+.modal h2{font-size:15px;font-weight:700}
+.modal .msub{color:#94a3b8;font-size:12px}
+.modal textarea{background:#0f1117;border:1px solid #2d3148;border-radius:6px;color:#e2e8f0;font-family:'Courier New',monospace;font-size:11.5px;padding:12px;flex:1;resize:none;outline:none;min-height:360px;line-height:1.5}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end}
+.btn-close{background:#2d3148;color:#e2e8f0;border:none;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:13px}
+.btn-copy{background:#6366f1;color:#fff;border:none;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:13px;font-weight:600}
+.btn-csv{background:#16a34a;color:#fff;border:none;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:13px;font-weight:600}
+.copied{background:#15803d!important}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>PCS GL Pivot &middot; P1&ndash;P5 2026</h1>
+    <div class="sub">97,639 GL transactions &middot; 69 cost centers &middot; Jan&ndash;May 2026</div>
+  </div>
+  <div class="ts" id="load-ts"></div>
+</div>
+<div class="container" id="app">
+  <div class="loading">Loading data...</div>
+</div>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div><h2 id="modal-title">Controller Review</h2><div class="msub" id="modal-sub"></div></div>
+    <textarea id="modal-text" readonly></textarea>
+    <div class="modal-footer">
+      <button class="btn-close" onclick="closeModal()">Close</button>
+      <button class="btn-csv" onclick="downloadCSV()">Download CSV</button>
+      <button class="btn-copy" id="btn-copy" onclick="copyText()">Copy to Clipboard</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let D = null;
+const PERIODS = ['1','2','3','4','5'];
+let heatOn=false,hideZeros=false,flagMode='all';
+let sortIdx=null,sortDir=-1,selFirst=false,flagFirst=false;
+let checked=new Set();
+let currentGL='',currentGLName='',currentRows=[];
+let csvData='';
+
+// Load data.json
+fetch('./gl_pivot_data.json?v='+Date.now())
+  .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+  .then(data=>{
+    D=data;
+    document.getElementById('load-ts').textContent='Data loaded · '+new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    buildUI();
+  })
+  .catch(e=>{
+    document.getElementById('app').innerHTML='<div class="err">Could not load gl_pivot_data.json<br><small>'+e.message+'</small><br><br>Make sure gl_pivot_data.json is in the same folder as index.html</div>';
+  });
+
+function buildUI(){
+  document.getElementById('app').innerHTML=`
+  <div class="filter-bar">
+    <div class="fld"><label>Category</label><select id="flt-cat" onchange="catChanged()"><option value="">All Categories</option></select></div>
+    <div class="fld"><label>GL Account</label><select id="flt-gl" class="gl-sel" onchange="renderPivot()"><option value="">— Select a GL account —</option></select></div>
+    <div class="fld"><label>Cost Center / Name</label><input type="text" id="flt-cc" placeholder="Search CC or name..." oninput="renderPivot()" style="width:165px"></div>
+    <div class="sep"></div>
+    <button class="btn" id="btn-zeros" onclick="toggleZeros()">Hide $0 Rows</button>
+    <button class="btn" id="btn-flags" onclick="cycleFlag()">Show All</button>
+    <button class="btn" id="btn-heat" onclick="toggleHeat()">Heatmap</button>
+    <div class="sep"></div>
+    <button class="btn" id="btn-sort-sel" onclick="sortSelected()" disabled>Sort: Selected First</button>
+    <button class="btn" id="btn-sort-flag" onclick="sortFlagged()">Sort: Flagged First</button>
+    <div class="sep"></div>
+    <button class="btn action" id="btn-export" onclick="openExport()" disabled>Export for Review (0)</button>
+    <div class="hint" id="hint-text">Select a GL to load</div>
+  </div>
+  <div class="action-bar" id="action-bar">
+    <div class="ab-label" id="ab-label">0 rows selected</div>
+    <div class="ab-sub" id="ab-sub"></div>
+    <button class="btn action" onclick="openExport()">Export for Controller Review</button>
+    <button class="btn" onclick="clearSelection()">Clear Selection</button>
+  </div>
+  <div class="summary-strip" id="ss" style="display:none">
+    <div class="ss-item"><div class="lbl">P1 Jan</div><div class="val" id="ss-p1">—</div></div>
+    <div class="ss-item"><div class="lbl">P2 Feb</div><div class="val" id="ss-p2">—</div></div>
+    <div class="ss-item"><div class="lbl">P3 Mar</div><div class="val" id="ss-p3">—</div></div>
+    <div class="ss-item"><div class="lbl">P4 Apr</div><div class="val" id="ss-p4">—</div></div>
+    <div class="ss-item"><div class="lbl">P5 May</div><div class="val" id="ss-p5">—</div></div>
+    <div class="ss-item"><div class="lbl">P4→P5 Var</div><div class="val" id="ss-var">—</div></div>
+    <div class="ss-item"><div class="lbl">Missing P5</div><div class="val warn" id="ss-miss">—</div></div>
+    <div class="ss-item"><div class="lbl">Credits P5</div><div class="val neg" id="ss-cred">—</div></div>
+    <div class="ss-item"><div class="lbl">Selected</div><div class="val" id="ss-sel" style="color:#6366f1">0</div></div>
+  </div>
+  <div class="legend">
+    <div><span class="dot dot-miss"></span>$0 in P5, had value in P1–P4</div>
+    <div><span class="dot dot-cred"></span>Credit in P5</div>
+    <div style="margin-left:auto;color:#374151">P1–P5 2026 · 97,639 transactions</div>
+  </div>
+  <div class="tbl-wrap" id="tbl-wrap">
+    <div style="text-align:center;padding:60px;color:#374151">Select a GL account above</div>
+  </div>`;
+
+  const catSel=document.getElementById('flt-cat');
+  [...new Set(D.gl_opts.map(g=>g.k))].filter(Boolean).sort().forEach(c=>{
+    const o=document.createElement('option');o.value=c;o.textContent=c;catSel.appendChild(o);
+  });
+  buildGLOpts('');
+}
+
+function buildGLOpts(cat){
+  const sel=document.getElementById('flt-gl'),cur=sel.value;
+  sel.innerHTML='<option value="">— Select a GL account —</option>';
+  D.gl_opts.filter(g=>!cat||g.k===cat).forEach(g=>{
+    const o=document.createElement('option');o.value=g.c;o.textContent='GL'+g.c+' — '+g.n;
+    if(String(g.c)===cur)o.selected=true;
+    sel.appendChild(o);
+  });
+}
+function catChanged(){buildGLOpts(document.getElementById('flt-cat').value);renderPivot();}
+
+function fmtK(v){
+  if(v===0||v==null)return '<span class="zero">—</span>';
+  const a=Math.abs(v);
+  const s=a>=100000?'$'+(a/1000).toFixed(0)+'K':a>=1000?'$'+(a/1000).toFixed(1)+'K':'$'+a.toFixed(2);
+  return v<0?'<span class="credit">('+s+')</span>':s;
+}
+function fmtVar(v4,v5){
+  const d=v5-v4;
+  if(d===0)return{html:'<span class="var-zero">—</span>',cls:'var-zero',raw:0};
+  const a=Math.abs(d);
+  const s=a>=100000?'$'+(a/1000).toFixed(0)+'K':a>=1000?'$'+(a/1000).toFixed(1)+'K':'$'+a.toFixed(2);
+  const pct=v4!==0?(' ('+(d/Math.abs(v4)*100).toFixed(0)+'%)'):'';
+  const cls=d>0?'var-pos':'var-neg';
+  return{html:'<span class="'+cls+'">'+(d>0?'+':'-')+s+pct+'</span>',cls,raw:d};
+}
+function fmtFull(v){const a=Math.abs(v),s='$'+a.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});return v<0?'('+s+')':v===0?'$0.00':s;}
+function fmtM(v){const a=Math.abs(v);const s=a>=1000000?'$'+(a/1000000).toFixed(2)+'M':a>=1000?'$'+(a/1000).toFixed(1)+'K':'$'+a.toFixed(2);return v<0?'('+s+')':s;}
+
+function renderPivot(){
+  currentGL=document.getElementById('flt-gl').value;
+  const q=document.getElementById('flt-cc').value.toLowerCase();
+  if(!currentGL){
+    document.getElementById('tbl-wrap').innerHTML='<div style="text-align:center;padding:60px;color:#374151">Select a GL account above</div>';
+    document.getElementById('ss').style.display='none';return;
+  }
+  const glInfo=D.gl_opts.find(g=>String(g.c)===String(currentGL))||{};
+  currentGLName='GL'+currentGL+' — '+glInfo.n;
+  const glData=D.pivot[String(currentGL)]||{};
+
+  let rows=D.ccs
+    .filter(cc=>!q||String(cc).includes(q)||((D.cc_lookup[String(cc)]||{}).n||'').toLowerCase().includes(q))
+    .map(cc=>{
+      const byP=glData[String(cc)]||{};
+      const vals=PERIODS.map(p=>byP[p]||0);
+      const v4=vals[3],v5=vals[4],varD=v5-v4;
+      const isMiss=v5===0&&vals.slice(0,4).some(v=>v!==0);
+      const isCred=v5<0;
+      return{cc,info:D.cc_lookup[String(cc)]||{},vals,v4,v5,varD,total:vals.reduce((a,b)=>a+b,0),isMiss,isCred};
+    });
+
+  if(flagMode==='missing')rows=rows.filter(r=>r.isMiss);
+  else if(flagMode==='credits')rows=rows.filter(r=>r.isCred);
+  if(hideZeros)rows=rows.filter(r=>r.vals.some(v=>v!==0));
+
+  if(selFirst)rows.sort((a,b)=>(checked.has(b.cc)?1:0)-(checked.has(a.cc)?1:0)||a.cc-b.cc);
+  else if(flagFirst)rows.sort((a,b)=>{const af=(a.isMiss?2:0)+(a.isCred?1:0),bf=(b.isMiss?2:0)+(b.isCred?1:0);return bf-af||a.cc-b.cc;});
+  else if(sortIdx!==null){
+    rows.sort((a,b)=>{
+      const av=sortIdx===5?a.varD:sortIdx===6?a.total:sortIdx===-1?a.cc:a.vals[sortIdx];
+      const bv=sortIdx===5?b.varD:sortIdx===6?b.total:sortIdx===-1?b.cc:b.vals[sortIdx];
+      return(av-bv)*sortDir;
+    });
+  }
+  currentRows=rows;
+
+  const tots=PERIODS.map((_,i)=>rows.reduce((s,r)=>s+r.vals[i],0));
+  const totVar=tots[4]-tots[3];
+  document.getElementById('ss').style.display='flex';
+  ['p1','p2','p3','p4','p5'].forEach((id,i)=>{const el=document.getElementById('ss-'+id);el.textContent=fmtM(tots[i]);el.className='val'+(tots[i]<0?' neg':tots[i]>0?' pos':'');});
+  const vEl=document.getElementById('ss-var');vEl.textContent=(totVar>=0?'+':'')+fmtM(totVar);vEl.className='val'+(totVar<0?' neg':totVar>0?' pos':'');
+  document.getElementById('ss-miss').textContent=rows.filter(r=>r.isMiss).length;
+  document.getElementById('ss-cred').textContent=rows.filter(r=>r.isCred).length;
+  document.getElementById('ss-sel').textContent=checked.size;
+  document.getElementById('hint-text').textContent=rows.length+' cost centers';
+  updateActionBar();
+
+  const allPos=rows.flatMap(r=>r.vals).filter(v=>v>0);
+  const maxV=allPos.length?Math.max(...allPos):1;
+
+  let html='<table><thead><tr>';
+  html+='<th class="chk-col"><input type="checkbox" id="chk-all" onclick="toggleAll(this)"></th>';
+  html+='<th class="cc-col left '+(sortIdx===-1?(sortDir===1?'sort-asc':'sort-desc'):'')+'" onclick="doSort(-1)">CC #</th>';
+  html+='<th class="name-col left">Name</th>';
+  html+='<th class="left" style="min-width:28px">St</th>';
+  PERIODS.forEach((p,i)=>{
+    const sc=sortIdx===i?(sortDir===1?'sort-asc':'sort-desc'):'';
+    const p5s=p==='5'?' style="color:#a78bfa"':'';
+    html+='<th class="'+sc+'"'+p5s+' onclick="doSort('+i+')">'+D.period_labels[p]+'</th>';
+  });
+  html+='<th class="var-col '+(sortIdx===5?(sortDir===1?'sort-asc':'sort-desc'):'')+'" onclick="doSort(5)" style="color:#a78bfa">P4→P5 Var</th>';
+  html+='<th class="total-col '+(sortIdx===6?(sortDir===1?'sort-asc':'sort-desc'):'')+'" onclick="doSort(6)">Total</th></tr></thead><tbody>';
+
+  rows.forEach(r=>{
+    const isChk=checked.has(r.cc);
+    const vInfo=fmtVar(r.v4,r.v5);
+    const rCls=(r.isMiss?'miss ':r.isCred?'cred ':'')+(isChk?'checked':'');
+    const dot=r.isMiss?'<span class="dot dot-miss"></span>':r.isCred?'<span class="dot dot-cred"></span>':'';
+    html+='<tr class="'+rCls.trim()+'" id="row-'+r.cc+'">';
+    html+='<td class="chk-col"><input type="checkbox"'+(isChk?' checked':'')+' onclick="toggleRow('+r.cc+',this)"></td>';
+    html+='<td class="cc-col">'+dot+'CC'+r.cc+'</td>';
+    html+='<td class="name-col" title="'+(r.info.n||'')+'">'+(r.info.n||'')+'</td>';
+    html+='<td class="st-col">'+(r.info.s||'')+'</td>';
+    r.vals.forEach((v,i)=>{
+      const cls=v===0?'zero':v<0?'credit':'normal';
+      let sty='';if(heatOn&&v>0){const op=(v/maxV*0.55).toFixed(3);sty=' style="background:rgba(99,102,241,'+op+')"';}
+      html+='<td class="'+cls+(i===4?' p5c':'')+'"'+sty+'>'+fmtK(v)+'</td>';
+    });
+    html+='<td class="var-col '+vInfo.cls+'">'+vInfo.html+'</td>';
+    const tc=r.total<0?'credit':r.total===0?'zero':'normal';
+    html+='<td class="total-col '+tc+'">'+fmtK(r.total)+'</td></tr>';
+  });
+
+  html+='<tr class="total-row"><td class="chk-col"></td><td class="cc-col">TOTAL</td><td class="name-col"></td><td></td>';
+  tots.forEach((v,i)=>{html+='<td class="'+(v<0?'credit':v===0?'zero':'normal')+(i===4?' p5c':'')+'">'+(v===0?'—':fmtK(v))+'</td>';});
+  const tvInfo=fmtVar(tots[3],tots[4]);
+  html+='<td class="var-col '+tvInfo.cls+'">'+tvInfo.html+'</td>';
+  const gt=tots.reduce((a,b)=>a+b,0);
+  html+='<td class="total-col '+(gt<0?'credit':gt===0?'zero':'normal')+'">'+fmtK(gt)+'</td></tr>';
+  html+='</tbody></table>';
+  document.getElementById('tbl-wrap').innerHTML=html;
+
+  const ca=document.getElementById('chk-all');
+  if(ca){const vc=rows.filter(r=>checked.has(r.cc)).length;ca.checked=vc>0&&vc===rows.length;ca.indeterminate=vc>0&&vc<rows.length;}
+}
+
+function toggleRow(cc,el){
+  if(el.checked)checked.add(cc);else checked.delete(cc);
+  const row=document.getElementById('row-'+cc);
+  if(row)row.className=row.className.replace('checked','').trim()+(el.checked?' checked':'');
+  updateActionBar();document.getElementById('ss-sel').textContent=checked.size;
+  const ca=document.getElementById('chk-all');
+  if(ca){const vc=currentRows.filter(r=>checked.has(r.cc)).length;ca.checked=vc>0&&vc===currentRows.length;ca.indeterminate=vc>0&&vc<currentRows.length;}
+}
+function toggleAll(el){currentRows.forEach(r=>el.checked?checked.add(r.cc):checked.delete(r.cc));renderPivot();}
+function clearSelection(){checked.clear();renderPivot();}
+
+function updateActionBar(){
+  const n=checked.size,ab=document.getElementById('action-bar'),eb=document.getElementById('btn-export'),sb=document.getElementById('btn-sort-sel');
+  if(n>0){
+    ab.className='action-bar visible';
+    document.getElementById('ab-label').textContent=n+' row'+(n>1?'s':'')+' selected';
+    const fl=currentRows.filter(r=>checked.has(r.cc)&&(r.isMiss||r.isCred)).length;
+    document.getElementById('ab-sub').textContent=currentGLName+(fl?' · '+fl+' flagged':'');
+    eb.textContent='Export for Review ('+n+')';eb.disabled=false;sb.disabled=false;
+  }else{ab.className='action-bar';eb.textContent='Export for Review (0)';eb.disabled=true;sb.disabled=true;}
+}
+function doSort(i){
+  selFirst=false;flagFirst=false;
+  document.getElementById('btn-sort-sel').className='btn';document.getElementById('btn-sort-sel').textContent='Sort: Selected First';
+  document.getElementById('btn-sort-flag').className='btn';document.getElementById('btn-sort-flag').textContent='Sort: Flagged First';
+  if(sortIdx===i)sortDir*=-1;else{sortIdx=i;sortDir=-1;}renderPivot();
+}
+function sortSelected(){
+  selFirst=!selFirst;flagFirst=false;
+  document.getElementById('btn-sort-sel').className=selFirst?'btn on':'btn';document.getElementById('btn-sort-sel').textContent=selFirst?'Selected First ✓':'Sort: Selected First';
+  document.getElementById('btn-sort-flag').className='btn';document.getElementById('btn-sort-flag').textContent='Sort: Flagged First';
+  renderPivot();
+}
+function sortFlagged(){
+  flagFirst=!flagFirst;selFirst=false;
+  document.getElementById('btn-sort-flag').className=flagFirst?'btn on':'btn';document.getElementById('btn-sort-flag').textContent=flagFirst?'Flagged First ✓':'Sort: Flagged First';
+  document.getElementById('btn-sort-sel').className='btn';document.getElementById('btn-sort-sel').textContent='Sort: Selected First';
+  renderPivot();
+}
+function toggleHeat(){heatOn=!heatOn;document.getElementById('btn-heat').className=heatOn?'btn on':'btn';renderPivot();}
+function toggleZeros(){hideZeros=!hideZeros;const b=document.getElementById('btn-zeros');b.className=hideZeros?'btn on':'btn';b.textContent=hideZeros?'Showing Active':'Hide $0 Rows';renderPivot();}
+function cycleFlag(){
+  const m=['all','missing','credits'],l=['Show All','Missing P5','Credits P5'];
+  flagMode=m[(m.indexOf(flagMode)+1)%3];
+  const b=document.getElementById('btn-flags');b.textContent=l[m.indexOf(flagMode)];b.className=flagMode!=='all'?'btn on':'btn';renderPivot();
+}
+
+function openExport(){
+  const selRows=currentRows.filter(r=>checked.has(r.cc));
+  const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  document.getElementById('modal-title').textContent='Controller Review — '+currentGLName;
+  document.getElementById('modal-sub').textContent=selRows.length+' items · '+now;
+  document.getElementById('modal-bg').className='modal-bg open';
+  document.getElementById('btn-copy').className='btn-copy';document.getElementById('btn-copy').textContent='Copy to Clipboard';
+
+  const w=(s,n)=>String(s==null?'':s).padEnd(n).slice(0,n);
+  const wr=(s,n)=>String(s==null?'':s).padStart(n).slice(-n);
+  let txt='CONTROLLER REVIEW REQUEST\n'+'='.repeat(80)+'\n';
+  txt+='Account : '+currentGLName+'\nPrepared: '+now+'\nItems   : '+selRows.length+'\n'+'='.repeat(80)+'\n\n';
+  txt+=w('CC#',8)+w('Name',22)+w('St',4)+wr('P1 Jan',11)+wr('P2 Feb',11)+wr('P3 Mar',11)+wr('P4 Apr',11)+wr('P5 May',11)+wr('Var P4>P5',12)+wr('Flag',13)+'\n'+'-'.repeat(103)+'\n';
+  let tots=[0,0,0,0,0];
+  selRows.forEach(r=>{
+    const flag=r.isMiss?'** MISSING P5':r.isCred?'** CREDIT P5':'';
+    const varD=r.v5-r.v4,varStr=(varD>=0?'+':'')+fmtFull(varD);
+    txt+=w('CC'+r.cc,8)+w(r.info.n||'',22)+w(r.info.s||'',4);
+    r.vals.forEach((v,i)=>{txt+=wr(fmtFull(v),11);tots[i]+=v;});
+    txt+=wr(varStr,12)+wr(flag,13)+'\n';
+  });
+  txt+='-'.repeat(103)+'\n';
+  const totVar=tots[4]-tots[3];
+  txt+=w('TOTAL',8)+w('',22)+w('',4);
+  tots.forEach(v=>txt+=wr(fmtFull(v),11));
+  txt+=wr((totVar>=0?'+':'')+fmtFull(totVar),12)+'\n';
+  document.getElementById('modal-text').value=txt;
+
+  csvData='Cost Center,Name,State,P1 Jan 26,P2 Feb 26,P3 Mar 26,P4 Apr 26,P5 May 26,Var P4 to P5,Flag\n';
+  selRows.forEach(r=>{
+    csvData+='CC'+r.cc+',"'+(r.info.n||'')+'",'+( r.info.s||'')+','+r.vals.map(v=>v.toFixed(2)).join(',')+',' +(r.v5-r.v4).toFixed(2)+','+(r.isMiss?'Missing P5':r.isCred?'Credit P5':'')+'\n';
+  });
+}
+function closeModal(){document.getElementById('modal-bg').className='modal-bg';}
+function copyText(){const ta=document.getElementById('modal-text');ta.select();document.execCommand('copy');const btn=document.getElementById('btn-copy');btn.textContent='Copied!';btn.className='btn-copy copied';setTimeout(()=>{btn.textContent='Copy to Clipboard';btn.className='btn-copy';},2000);}
+function downloadCSV(){
+  const glInfo=D.gl_opts.find(g=>String(g.c)===String(currentGL))||{};
+  const fname='Review_GL'+currentGL+'_'+((glInfo.n||'').replace(/[^a-z0-9]/gi,'_').slice(0,20))+'.csv';
+  const blob=new Blob([csvData],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();
+}
+</script>
+</body>
+</html>
