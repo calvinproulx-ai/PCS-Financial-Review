@@ -130,7 +130,7 @@ let currentGL='',currentGLName='',currentRows=[];
 let csvData='';
 
 // Load data.json
-fetch('./gl_pivot_data.json?v='+Date.now())
+fetch('./gl_pivot_data_v2.json?v='+Date.now())
   .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
   .then(data=>{
     D=data;
@@ -138,7 +138,7 @@ fetch('./gl_pivot_data.json?v='+Date.now())
     buildUI();
   })
   .catch(e=>{
-    document.getElementById('app').innerHTML='<div class="err">Could not load gl_pivot_data.json<br><small>'+e.message+'</small><br><br>Make sure gl_pivot_data.json is in the same folder as index.html</div>';
+    document.getElementById('app').innerHTML='<div class="err">Could not load gl_pivot_data_v2.json<br><small>'+e.message+'</small><br><br>Make sure gl_pivot_data_v2.json is in the same folder as index.html</div>';
   });
 
 function buildUI(){
